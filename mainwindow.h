@@ -1,0 +1,106 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+
+#include "loggerthread.h"
+#include "logstorage.h"
+#include "settings.h"
+#include "loggerthread.h"
+#include "texthighlighter.h"
+
+namespace Ui {
+class MainWindow;
+}
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+    
+public:
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+    
+private slots:
+    void on_pushButtonStartLogging_clicked();
+
+    void on_newLogItem(const QString &type, const QString &tag, const QString &text);
+    void on_newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts);
+
+    void on_pushButtonClear_clicked();
+
+
+    void on_tagSelectColor();
+    void on_tagClearColor();
+    void on_typeSelectColor();
+    void on_typeClearColor();
+    void on_filterAdd();
+    void on_filterEdit();
+    void on_filterDelete();
+    void on_filterSelectColor();
+    void on_filterClearColor();
+    void onCurrentLog_tagHide();
+    void onCurrentLog_tagSelectColor();
+    void onCurrentLog_tagClearColor();
+
+    void on_tableWidgetTags_itemChanged(QTableWidgetItem *item);
+    void on_tableWidgetTags_customContextMenuRequested(const QPoint &pos);
+
+    void on_tableWidgetTypes_customContextMenuRequested(const QPoint &pos);
+    void on_tableWidgetTypes_itemChanged(QTableWidgetItem *item);
+
+    void on_tableWidgetFilters_customContextMenuRequested(const QPoint &pos);
+
+    // menu
+    void onActionLoad_highlightingTriggered();
+    void onActionSave_highlightingTriggered();
+    void onActionGeneral();
+    void onActionExit();
+    void onActionLoadFile();
+    void onActionAdbLogcatToggled(bool checked);
+    void onActionTrustzoneToggled(bool checked);
+    void onActionKernelLogToggled(bool checked);
+    void onActionAbout();
+
+
+    void on_pushButtonClearTags_clicked();
+    void on_pushButtonClearLog_clicked();
+
+    void on_tableWidgetFilters_itemChanged(QTableWidgetItem *item);
+
+    void on_plainTextEdit_customContextMenuRequested(const QPoint &pos);
+    void on_lineEditSearch_textChanged(const QString &arg1);
+
+private:
+    LoggerThread::Status threadsStatus;
+    Ui::MainWindow *ui;
+    int searchTextColorRuleId;
+    int searchBackgoundColorRuleId;
+
+    int currentLogNumber; // used for context menu
+
+    LoggerThread *loggerThreads[Settings::LogThreadSize];
+
+    LogStorage *logStorage;
+    Settings *settings;
+    QTableWidgetItem *selectedTableItem;
+    TextHighlighter *textHighlighter;
+
+    void connectLoggerThread(LoggerThread *thread);
+    void createLoggerThread(Settings::LogThread thread, bool start = false);
+    void deleteLoggerThread(Settings::LogThread thread);
+    void restartLoggerThread(Settings::LogThread thread);
+    void startLoggerThreads();
+    void stopLoggerThreads();
+    void resumeLoggerThreads();
+    void pauseLoggerThreads();
+
+    void addLogItem(const QString &type, const QString &tag, const QString &text);
+
+    void setTagColor(const QString &tag);
+    void clearTagColor(const QString &tag);
+
+    void setDarkStyle();
+};
+
+#endif // MAINWINDOW_H
