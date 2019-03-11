@@ -6,6 +6,12 @@
 #include <QList>
 #include <QByteArray>
 
+enum class LoggerThreadType
+{
+    Unknown,
+    Stream
+};
+
 class LoggerThread : public QThread
 {
     Q_OBJECT
@@ -17,15 +23,15 @@ public:
         STOPPED
     } Status;
 
-    LoggerThread();
-
+    LoggerThread(LoggerThreadType type);
+    LoggerThreadType getType();
     void resume();
     void pause();
     void stop();
     Status getStatus();
 signals:
     void newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts);
-
+    void finished(LoggerThread *thiz);
 protected:
     void run();
 
@@ -35,6 +41,7 @@ protected:
     virtual void parseLog(const QString &line, QString &type, QString &tag, QString &text) = 0;
 
     Status status;
+    LoggerThreadType _type;
 };
 
 #endif // LOGGERTHREAD_H

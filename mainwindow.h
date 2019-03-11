@@ -2,12 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QList>
 
 #include "loggerthread.h"
 #include "logstorage.h"
 #include "settings.h"
 #include "loggerthread.h"
 #include "texthighlighter.h"
+#include "filestream.h"
+#include "loggerthread.h"
 
 namespace Ui {
 class MainWindow;
@@ -26,7 +29,7 @@ private slots:
 
     void on_newLogItem(const QString &type, const QString &tag, const QString &text);
     void on_newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts);
-
+    void on_LoggerThread_finished(LoggerThread *thread);
     void on_pushButtonClear_clicked();
 
 
@@ -62,6 +65,8 @@ private slots:
     void onActionKernelLogToggled(bool checked);
     void onActionAbout();
 
+    void onActionNewComPort();
+    void onActionComPort(QAction *action);
 
     void on_pushButtonClearTags_clicked();
     void on_pushButtonClearLog_clicked();
@@ -79,13 +84,14 @@ private:
 
     int currentLogNumber; // used for context menu
 
-    LoggerThread *loggerThreads[Settings::LogThreadSize];
-
     LogStorage *logStorage;
     Settings *settings;
     QTableWidgetItem *selectedTableItem;
     TextHighlighter *textHighlighter;
+    QList<LoggerThread*> loggerThreads;
 
+    void addEditComPort(const QString &comPort);
+    void generateComPortMenu();
     void connectLoggerThread(LoggerThread *thread);
     void createLoggerThread(Settings::LogThread thread, bool start = false);
     void deleteLoggerThread(Settings::LogThread thread);
@@ -100,6 +106,8 @@ private:
     void setTagColor(const QString &tag);
     void clearTagColor(const QString &tag);
 
+    void startComPortThread(const QString &name);
+    void startFileThread(const FileSettings &settings);
     void setDarkStyle();
 };
 

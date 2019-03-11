@@ -9,7 +9,7 @@ struct AbstractItem {
     bool isVisible;
 
     AbstractItem() {
-        widget = NULL;
+        widget = nullptr;
         ruleId = 0;
         isVisible = false;
     }

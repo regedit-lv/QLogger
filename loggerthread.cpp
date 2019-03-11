@@ -7,9 +7,15 @@
 #include <fcntl.h>
 #include <errno.h>
 
-LoggerThread::LoggerThread()
+LoggerThread::LoggerThread(LoggerThreadType type)
 {
     status = RUNNING;
+    _type = type;
+}
+
+LoggerThreadType LoggerThread::getType()
+{
+    return _type;
 }
 
 void LoggerThread::run() {
@@ -28,7 +34,7 @@ void LoggerThread::run() {
         QByteArray newBytes = getLogBytes();
 
         if (newBytes.size() == 0) {
-            //break;
+            break;
         }
 
         data.append(newBytes);
@@ -71,6 +77,7 @@ void LoggerThread::run() {
 
     endLogging();
     status = STOPPED;
+    emit finished(this);
     deleteLater();
 }
 

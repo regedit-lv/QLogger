@@ -332,7 +332,7 @@
      <x>0</x>
      <y>0</y>
      <width>729</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -360,9 +360,13 @@
     <property name="title">
      <string>Logging</string>
     </property>
-    <addaction name="actionTrustzone"/>
-    <addaction name="actionAdb_logcat"/>
-    <addaction name="actionKernel_log"/>
+    <widget class="QMenu" name="menuCom_Port">
+     <property name="title">
+      <string>Com Port</string>
+     </property>
+     <addaction name="actionComPortNew"/>
+    </widget>
+    <addaction name="menuCom_Port"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSettings"/>
@@ -431,6 +435,11 @@
   <action name="actionAbout_QLogger">
    <property name="text">
     <string>About QLogger</string>
+   </property>
+  </action>
+  <action name="actionComPortNew">
+   <property name="text">
+    <string>New</string>
    </property>
   </action>
  </widget>

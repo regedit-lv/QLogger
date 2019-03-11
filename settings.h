@@ -5,6 +5,7 @@
 #include <QList>
 #include <QString>
 #include "loggerthread.h"
+#include "comportstream.h"
 
 class Settings
 {
@@ -36,6 +37,12 @@ public:
     bool flagBCrash;
 
     QString getAdbLogcatFlags();
+
+    // Com port streams
+    QList<ComPortSettings> comPorts;
+
+    ComPortSettings *getComPortSettings(const QString name);
+    bool deleteComPortSettings(const QString name);
 private:
     Settings();
     void init();

@@ -4,39 +4,37 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui serialport script
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = QLogger
 TEMPLATE = app
 
-CONFIG += console
+CONFIG += console c++11
 
 SOURCES += main.cpp\
         mainwindow.cpp \
     loggerthread.cpp \
     logstorage.cpp \
     settings.cpp \
-    adblogcatthread.cpp \
     texthighlighter.cpp \
-    tzlogthread.cpp \
     idhelper.cpp \
     customdialog.cpp \
     filterlist.cpp \
     taglist.cpp \
     typelist.cpp \
-    filethread.cpp \
-    adblogcat.cpp \
-    kernellogthread.cpp
+    logstream.cpp \
+    comportstream.cpp \
+    streamthread.cpp \
+    threadmanager.cpp \
+    filestream.cpp
 
 HEADERS  += mainwindow.h \
     loggerthread.h \
     logstorage.h \
     settings.h \
-    adblogcatthread.h \
     texthighlighter.h \
-    tzlogthread.h \
     idhelper.h \
     customdialog.h \
     debug.h \
@@ -44,8 +42,10 @@ HEADERS  += mainwindow.h \
     taglist.h \
     typelist.h \
     abstractitem.h \
-    filethread.h \
-    adblogcat.h \
-    kernellogthread.h
+    logstream.h \
+    comportstream.h \
+    streamthread.h \
+    threadmanager.h \
+    filestream.h
 
 FORMS    += mainwindow.ui

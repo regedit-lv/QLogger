@@ -3,7 +3,7 @@
 #include "texthighlighter.h"
 #include "logstorage.h"
 
-Settings *Settings::instance = NULL;
+Settings *Settings::instance = nullptr;
 const char *Settings::FileName = "settings.ini";
 
 Settings::Settings() {
@@ -16,7 +16,7 @@ void Settings::init() {
 }
 
 Settings *Settings::getInstance() {
-    if (NULL == instance) {
+    if (nullptr == instance) {
         instance = new Settings();
         instance->init();
     }
@@ -46,6 +46,29 @@ void Settings::loadSettings() {
 
     settings.endGroup();
 
+    settings.beginGroup("Streams");
+    int count = settings.beginReadArray("ComPorts");
+
+    for (int i = 0; i < count; i++)
+    {
+        ComPortSettings comPort;
+
+        settings.setArrayIndex(i);
+        comPort.streamSettings.name = settings.value("name", "").toString();
+        comPort.streamSettings.tagScript = settings.value("tagScript", "").toString();
+        comPort.port = settings.value("port", "").toString();
+        comPort.baudRate = settings.value("baudRate", -1).toInt();
+        comPort.dataBits = static_cast<QSerialPort::DataBits>(settings.value("dataBits", -1).toInt());
+        comPort.parity = static_cast<QSerialPort::Parity>(settings.value("parity", -1).toInt());
+        comPort.stopBits = static_cast<QSerialPort::StopBits>(settings.value("stopBits", -1).toInt());
+        comPort.flowControl = static_cast<QSerialPort::FlowControl>(settings.value("flowControl", -1).toInt());
+
+        comPorts.append(comPort);
+    }
+    settings.endArray();
+
+    settings.endGroup();
+
     TextHighlighter::instance()->loadInfo(settings);
     LogStorage::getInstance()->loadInfo(settings);
 }
@@ -68,6 +91,26 @@ void Settings::saveSettings() {
     settings.setValue("flagBRadio", flagBRadio);
     settings.setValue("flagBEvents", flagBEvents);
     settings.setValue("flagBCrash", flagBCrash);
+
+    settings.endGroup();
+
+    settings.beginGroup("Streams");
+    settings.beginWriteArray("ComPorts", comPorts.size());
+    for (int i = 0; i < comPorts.size(); i++)
+    {
+        const ComPortSettings &comPort = comPorts.at(i);
+
+        settings.setArrayIndex(i);
+        settings.setValue("name", comPort.streamSettings.name);
+        settings.setValue("tagScript", comPort.streamSettings.tagScript);
+        settings.setValue("port", comPort.port);
+        settings.setValue("baudRate", comPort.baudRate);
+        settings.setValue("dataBits", comPort.dataBits);
+        settings.setValue("parity", comPort.parity);
+        settings.setValue("stopBits", comPort.stopBits);
+        settings.setValue("flowControl", comPort.flowControl);
+    }
+    settings.endArray();
 
     settings.endGroup();
 
@@ -104,4 +147,32 @@ QString Settings::getAdbLogcatFlags() {
     }
 
     return flags;
+}
+
+ComPortSettings *Settings::getComPortSettings(const QString name)
+{
+    for (ComPortSettings &comPort : comPorts)
+    {
+        if (comPort.streamSettings.name == name)
+        {
+            return &comPort;
+        }
+    }
+
+    return nullptr;
+}
+
+bool Settings::deleteComPortSettings(const QString name)
+{
+    for (int i = 0; i < comPorts.size(); i++)
+    {
+        ComPortSettings &comPort = comPorts[i];
+        if (comPort.streamSettings.name == name)
+        {
+            comPorts.removeAt(i);
+            return true;
+        }
+    }
+
+    return false;
 }
