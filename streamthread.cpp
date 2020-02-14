@@ -1,6 +1,6 @@
 #include "streamthread.h"
 
-StreamThread::StreamThread(LogStream *stream) : LoggerThread(LoggerThreadType::Stream)
+StreamThread::StreamThread(LogStream *stream) : LoggerThread(LoggerThreadType::Stream, stream->settings.name)
 {
     _stream = stream;
 }

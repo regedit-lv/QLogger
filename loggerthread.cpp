@@ -7,15 +7,21 @@
 #include <fcntl.h>
 #include <errno.h>
 
-LoggerThread::LoggerThread(LoggerThreadType type)
+LoggerThread::LoggerThread(LoggerThreadType type, const QString &name)
 {
     status = RUNNING;
     _type = type;
+    _name = name;
 }
 
 LoggerThreadType LoggerThread::getType()
 {
     return _type;
+}
+
+const QString & LoggerThread::getName()
+{
+    return _name;
 }
 
 void LoggerThread::run() {

@@ -23,8 +23,9 @@ public:
         STOPPED
     } Status;
 
-    LoggerThread(LoggerThreadType type);
+    LoggerThread(LoggerThreadType type, const QString &name);
     LoggerThreadType getType();
+    const QString &getName();
     void resume();
     void pause();
     void stop();
@@ -42,6 +43,7 @@ protected:
 
     Status status;
     LoggerThreadType _type;
+    QString _name;
 };
 
 #endif // LOGGERTHREAD_H

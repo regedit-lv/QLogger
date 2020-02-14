@@ -153,10 +153,13 @@ ComPortSettings *Settings::getComPortSettings(const QString name)
 {
     for (ComPortSettings &comPort : comPorts)
     {
+        DBG_OUT << name << " " << comPort.streamSettings.name << "\n";
         if (comPort.streamSettings.name == name)
         {
+            DBG_OUT << "true\n";
             return &comPort;
         }
+        DBG_OUT << "false\n";
     }
 
     return nullptr;

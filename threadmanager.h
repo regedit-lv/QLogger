@@ -11,12 +11,13 @@ class ThreadManager
 public:
 
     static ThreadManager *getInstance();
-    LoggerThread *Add(LogStream *stream);
-
+    LoggerThread *add(LogStream *stream);
+    LoggerThread *get(const QString &name);
+    void remove(LoggerThread *thread);
 protected:
     static ThreadManager *instance;
     ThreadManager();
-    QList<LoggerThread*> threads;
+    QList<LoggerThread*> _threads;
 };
 
 #endif // THREADMANAGER_H

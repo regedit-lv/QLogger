@@ -25,13 +25,10 @@ public:
     ~MainWindow();
     
 private slots:
-    void on_pushButtonStartLogging_clicked();
-
     void on_newLogItem(const QString &type, const QString &tag, const QString &text);
     void on_newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts);
     void on_LoggerThread_finished(LoggerThread *thread);
     void on_pushButtonClear_clicked();
-
 
     void on_tagSelectColor();
     void on_tagClearColor();
@@ -60,9 +57,6 @@ private slots:
     void onActionGeneral();
     void onActionExit();
     void onActionLoadFile();
-    void onActionAdbLogcatToggled(bool checked);
-    void onActionTrustzoneToggled(bool checked);
-    void onActionKernelLogToggled(bool checked);
     void onActionAbout();
 
     void onActionNewComPort();
@@ -76,8 +70,9 @@ private slots:
     void on_plainTextEdit_customContextMenuRequested(const QPoint &pos);
     void on_lineEditSearch_textChanged(const QString &arg1);
 
+    void on_pushButtonPauseLogging_clicked();
+
 private:
-    LoggerThread::Status threadsStatus;
     Ui::MainWindow *ui;
     int searchTextColorRuleId;
     int searchBackgoundColorRuleId;
@@ -88,18 +83,11 @@ private:
     Settings *settings;
     QTableWidgetItem *selectedTableItem;
     TextHighlighter *textHighlighter;
-    QList<LoggerThread*> loggerThreads;
+    bool _isLogPaused;
 
     void addEditComPort(const QString &comPort);
     void generateComPortMenu();
     void connectLoggerThread(LoggerThread *thread);
-    void createLoggerThread(Settings::LogThread thread, bool start = false);
-    void deleteLoggerThread(Settings::LogThread thread);
-    void restartLoggerThread(Settings::LogThread thread);
-    void startLoggerThreads();
-    void stopLoggerThreads();
-    void resumeLoggerThreads();
-    void pauseLoggerThreads();
 
     void addLogItem(const QString &type, const QString &tag, const QString &text);
 
@@ -107,6 +95,8 @@ private:
     void clearTagColor(const QString &tag);
 
     void startComPortThread(const QString &name);
+    void stopThread(const QString &name);
+    LoggerThread *getRunningThread(const QString &name);
     void startFileThread(const FileSettings &settings);
     void setDarkStyle();
 };

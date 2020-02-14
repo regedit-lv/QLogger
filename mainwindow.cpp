@@ -59,13 +59,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionComPortNew, SIGNAL(triggered()), this, SLOT(onActionNewComPort()));
     generateComPortMenu();
 
-    threadsStatus = LoggerThread::RUNNING;
-    ui->pushButtonStartLogging->setText("Pause");
+    _isLogPaused = false;
+    ui->pushButtonPauseLogging->setText("Pause");
 }
 
 MainWindow::~MainWindow()
 {
-    stopLoggerThreads();
+    // TODO: stop all runnings logger threads
     delete ui;
 }
 
@@ -332,87 +332,35 @@ void MainWindow::generateComPortMenu()
 
     for (ComPortSettings &comPort : settings->getInstance()->comPorts)
     {
-        bool running = false;
-        for (LoggerThread *thread : loggerThreads)
-        {
-            if (thread->getType() == LoggerThreadType::Stream)
-            {
-                StreamThread *streamThread = static_cast<StreamThread*>(thread);
-                if (streamThread->getStream()->settings.name == comPort.streamSettings.name)
-                {
-                    running = true;
-                    break;
-                }
-            }
-        }
+        bool running = ThreadManager::getInstance()->get(comPort.streamSettings.name) != nullptr;
 
         QMenu *menu = ui->menuCom_Port->addMenu(QString("%1 %2").arg(comPort.streamSettings.name).arg(running ? "(running)" : ""));
 
         connect(menu, SIGNAL(triggered(QAction *)), this, SLOT(onActionComPort(QAction *)), Qt::QueuedConnection);
 
-        menu->addAction("start");
+        if (running)
+        {
+            menu->addAction("stop");
+        }
+        else
+        {
+            menu->addAction("start");
+        }
         menu->addAction("edit");
         menu->addAction("delete");
     }
 
 }
-void MainWindow::connectLoggerThread(LoggerThread *thread) {
-//    connect(thread, SIGNAL(newLogItem(const QString &, const QString &, const QString &)),
-//            this, SLOT(on_newLogItem(const QString &, const QString &, const QString &)), Qt::BlockingQueuedConnection);
+void MainWindow::connectLoggerThread(LoggerThread *thread)
+{
     connect(thread, SIGNAL(newLogItems(QList<QString>,QList<QString>,QList<QString>)),
             this, SLOT(on_newLogItems(QList<QString>,QList<QString>,QList<QString>)), Qt::BlockingQueuedConnection);
     connect(thread,  SIGNAL(finished(LoggerThread*)),
             this, SLOT(on_LoggerThread_finished(LoggerThread*)), Qt::BlockingQueuedConnection);
 }
 
-
-void MainWindow::deleteLoggerThread(Settings::LogThread thread) {
-//    if (nullptr != loggerThreads[thread]) {
-//        loggerThreads[thread]->stop();
-//        loggerThreads[thread] = nullptr;
-//    }
-}
-
-void MainWindow::restartLoggerThread(Settings::LogThread thread) {
-//    if (Settings::getInstance()->logThreadStatus[thread]) {
-//        deleteLoggerThread(thread);
-//        createLoggerThread(thread, threadsStatus == LoggerThread::RUNNING);
-//    }
-}
-
-void MainWindow::startLoggerThreads() {
-//    for (int i = 0; i < Settings::LogThreadSize; i++) {
-//        if (nullptr != loggerThreads[i]) {
-//            loggerThreads[i]->start();
-//        }
-//    }
-}
-
-void MainWindow::stopLoggerThreads() {
-//    for (int i = 0; i < Settings::LogThreadSize; i++) {
-//        if (nullptr != loggerThreads[i]) {
-//            loggerThreads[i]->stop();
-//        }
-//    }
-}
-
-void MainWindow::resumeLoggerThreads() {
-//    for (int i = 0; i < Settings::LogThreadSize; i++) {
-//        if (nullptr != loggerThreads[i]) {
-//            loggerThreads[i]->resume();
-//        }
-//    }
-}
-
-void MainWindow::pauseLoggerThreads() {
-//    for (int i = 0; i < Settings::LogThreadSize; i++) {
-//        if (nullptr != loggerThreads[i]) {
-//            loggerThreads[i]->pause();
-//        }
-//    }
-}
-
-void MainWindow::addLogItem(const QString &type, const QString &tag, const QString &text) {
+void MainWindow::addLogItem(const QString &type, const QString &tag, const QString &text)
+{
     LogItem li;
     li.tag = tag;
     li.type = type;
@@ -422,6 +370,11 @@ void MainWindow::addLogItem(const QString &type, const QString &tag, const QStri
 
 void MainWindow::on_newLogItem(const QString &type, const QString &tag, const QString &text)
 {
+    if (_isLogPaused)
+    {
+        return;
+    }
+
     QScrollBar *vb = ui->plainTextEdit->verticalScrollBar();
     QScrollBar *hb = ui->plainTextEdit->verticalScrollBar();
     bool scrollDown = vb->maximum() == vb->value();
@@ -433,7 +386,13 @@ void MainWindow::on_newLogItem(const QString &type, const QString &tag, const QS
     }
 }
 
-void MainWindow::on_newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts) {
+void MainWindow::on_newLogItems(const QList<QString> &types, const QList<QString> &tags, const QList<QString> &texts)
+{
+    if (_isLogPaused)
+    {
+        return;
+    }
+
     QScrollBar *vb = ui->plainTextEdit->verticalScrollBar();
     QScrollBar *hb = ui->plainTextEdit->verticalScrollBar();
     bool scrollDown = vb->maximum() == vb->value();
@@ -452,20 +411,7 @@ void MainWindow::on_newLogItems(const QList<QString> &types, const QList<QString
 
 void MainWindow::on_LoggerThread_finished(LoggerThread *thread)
 {
-    loggerThreads.removeOne(thread);
-}
-
-void MainWindow::on_pushButtonStartLogging_clicked()
-{
-    if (ui->pushButtonStartLogging->text() == "Pause") {
-        threadsStatus = LoggerThread::PAUSED;
-        pauseLoggerThreads();
-        ui->pushButtonStartLogging->setText("Resume");
-    } else if (ui->pushButtonStartLogging->text() == "Resume") {
-        threadsStatus = LoggerThread::RUNNING;
-        resumeLoggerThreads();
-        ui->pushButtonStartLogging->setText("Pause");
-    }
+    ThreadManager::getInstance()->remove(thread);
 }
 
 void MainWindow::on_pushButtonClear_clicked()
@@ -610,8 +556,6 @@ void MainWindow::onActionGeneral() {
             settings->maxLinesOfLogs = c;
             settings->saveSettings();
         }
-
-        restartLoggerThread(Settings::LogThreadAdbLogcat);
     }
 }
 
@@ -659,45 +603,6 @@ void MainWindow::onActionLoadFile() {
     }
 }
 
-void MainWindow::onActionAdbLogcatToggled(bool checked) {
-    //if (checked) {
-    //    //createLoggerThread(Settings::LogThreadAdbLogcat, checked);
-    //} else {
-    //    //deleteLoggerThread(Settings::LogThreadAdbLogcat);
-    //}
-    //
-    //Settings::getInstance()->logThreadStatus[Settings::LogThreadAdbLogcat] = checked;
-    //Settings::getInstance()->saveSettings();
-}
-
-void MainWindow::onActionTrustzoneToggled(bool checked) {
-    //if (checked) {
-    //    //createLoggerThread(Settings::LogThreadTrustzone);
-    //    if (threadsStatus == LoggerThread::RUNNING) {
-    //        //startLoggerThreads();
-    //    }
-    //} else {
-    //    //deleteLoggerThread(Settings::LogThreadTrustzone);
-    //}
-    //
-    //Settings::getInstance()->logThreadStatus[Settings::LogThreadTrustzone] = checked;
-    //Settings::getInstance()->saveSettings();
-}
-
-void MainWindow::onActionKernelLogToggled(bool checked) {
-    //if (checked) {
-    //    createLoggerThread(Settings::LogThreadKernel);
-    //    if (threadsStatus == LoggerThread::RUNNING) {
-    //        startLoggerThreads();
-    //    }
-    //} else {
-    //    deleteLoggerThread(Settings::LogThreadKernel);
-    //}
-    //
-    //Settings::getInstance()->logThreadStatus[Settings::LogThreadKernel] = checked;
-    //Settings::getInstance()->saveSettings();
-}
-
 void MainWindow::onActionAbout() {
     QMessageBox::about(this, "QLogger", "Reading logs.<br>" \
                        "Version 0.9 <br>" \
@@ -716,16 +621,21 @@ void MainWindow::onActionComPort(QAction *action)
 {
     QMenu *menu = static_cast<QMenu*>(action->parentWidget());
     QString actionStr = action->text();
-    QString comPortName = menu->title();
+    // title text is <name> (<status>). For example: MyComPort (running)
+    QString comPortName = menu->title().split(" ").at(0);
 
     if (actionStr == "start")
     {
         startComPortThread(comPortName);
     }
+    else if (actionStr == "stop")
+    {
+        startComPortThread(comPortName);
+    }
+
     else if (actionStr == "edit")
     {
         addEditComPort(comPortName);
-        generateComPortMenu();
         Settings::getInstance()->saveSettings();
     }
     else if (actionStr == "delete")
@@ -736,31 +646,39 @@ void MainWindow::onActionComPort(QAction *action)
                                       QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::Yes) {
             Settings::getInstance()->deleteComPortSettings(comPortName);
-            generateComPortMenu();
             Settings::getInstance()->saveSettings();
         }
     }
+
+    generateComPortMenu();
 }
 
 void MainWindow::startComPortThread(const QString &name)
 {
     const ComPortSettings *settings = Settings::getInstance()->getComPortSettings(name);
     ComPortStream *stream = new ComPortStream(*settings);
-    LoggerThread *thread = ThreadManager::getInstance()->Add(stream);
+    LoggerThread *thread = ThreadManager::getInstance()->add(stream);
 
     connectLoggerThread(thread);
     thread->start();
-    loggerThreads.append(thread);
+}
+
+void MainWindow::stopThread(const QString &name)
+{
+    LoggerThread *thread = ThreadManager::getInstance()->get(name);
+    if (thread != nullptr)
+    {
+        thread->stop();
+    }
 }
 
 void MainWindow::startFileThread(const FileSettings &settings)
 {
     FileStream *stream = new FileStream(settings);
-    LoggerThread *thread = ThreadManager::getInstance()->Add(stream);
+    LoggerThread *thread = ThreadManager::getInstance()->add(stream);
 
     connectLoggerThread(thread);
     thread->start();
-    loggerThreads.append(thread);
 }
 
 void MainWindow::on_pushButtonClearTags_clicked()
@@ -1089,4 +1007,17 @@ void MainWindow::on_lineEditSearch_textChanged(const QString &text)
     //int indexBackgroundColor = textHighlighter->indexOfRule(searchBackgoundColorRuleId);
     //TextHighlighterRule ruleBackgroundColor(indexBackgroundColor);
 
+}
+
+void MainWindow::on_pushButtonPauseLogging_clicked()
+{
+    _isLogPaused = !_isLogPaused;
+    if (_isLogPaused)
+    {
+        ui->pushButtonPauseLogging->setText("Resume");
+    }
+    else
+    {
+        ui->pushButtonPauseLogging->setText("Pause");
+    }
 }

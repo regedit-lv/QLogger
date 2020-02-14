@@ -14,11 +14,29 @@ ThreadManager *ThreadManager::getInstance() {
     return instance;
 }
 
-LoggerThread *ThreadManager::Add(LogStream *stream)
+LoggerThread *ThreadManager::add(LogStream *stream)
 {
     LoggerThread *thread = new StreamThread(stream);
 
-    threads.append(thread);
+    _threads.append(thread);
 
     return thread;
+}
+
+LoggerThread *ThreadManager::get(const QString &name)
+{
+    for (LoggerThread *loggerThread : _threads)
+    {
+        if (loggerThread->getName() == name)
+        {
+            return loggerThread;
+        }
+    }
+
+    return nullptr;
+}
+
+void ThreadManager::remove(LoggerThread *thread)
+{
+    _threads.removeOne(thread);
 }
